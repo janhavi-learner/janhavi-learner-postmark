@@ -28,6 +28,14 @@
   --sheet-shadow: 0 -8px 30px rgb(0 0 0 / 0.12);
   --sheet-max-height: 72dvh;
   --chip-size: 22px;
+
+  /* Zoom preview and Detail dot */
+  --overview-width: 72px;
+  --overview-inset: 10px;
+  --overview-frame: #c0392b;
+  --dot-size: 8px;
+  --dot-color: #c0392b;
+  --dot-ring: rgb(255 255 255 / 0.9);
   --chip-size-big: 44px;
 
   /* Motion */
@@ -73,6 +81,44 @@ body { position: fixed; inset: 0; }
   display: block;
   box-shadow: var(--stamp-shadow);
 }
+/* Live preview of the whole stamp while zoomed in. Sits in a corner of the stage; tap to zoom out. */
+#overview {
+  position: absolute;
+  z-index: 2;
+  width: var(--overview-width);
+  padding: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.25), 0 0 0 2px #fff;
+  transition: top 180ms ease, left 180ms ease;
+}
+#overview[hidden] { display: none; }
+#overview canvas { display: block; width: 100%; height: auto; }
+#overview[data-corner^="top"] { top: var(--overview-inset); }
+#overview[data-corner^="bottom"] { top: calc(100% - var(--overview-inset) - var(--overview-width) * 1.25); }
+#overview[data-corner$="left"] { left: var(--overview-inset); }
+#overview[data-corner$="right"] { left: calc(100% - var(--overview-inset) - var(--overview-width)); }
+.view-box {
+  position: absolute;
+  border: 1.5px solid var(--overview-frame);
+  pointer-events: none;
+}
+
+/* Detail brush: where the paint lands. Positioned by its centre. */
+#detail-dot {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 5;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  margin: calc(var(--dot-size) / -2) 0 0 calc(var(--dot-size) / -2);
+  border-radius: 50%;
+  background: var(--dot-color);
+  box-shadow: 0 0 0 1.5px var(--dot-ring);
+  pointer-events: none;
+}
+#detail-dot[hidden] { display: none; }
+
 #engine-message {
   max-width: 28ch;
   text-align: center;

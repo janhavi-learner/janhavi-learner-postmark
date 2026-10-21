@@ -12,7 +12,12 @@
   <main id="stage">
     <canvas id="stamp" aria-label="Painting"></canvas>
     <p id="engine-message" hidden></p>
+    <button type="button" id="overview" data-corner="top-left" aria-label="Zoom out to the whole stamp" hidden>
+      <canvas></canvas>
+      <span class="view-box"></span>
+    </button>
   </main>
+  <div id="detail-dot" hidden></div>
 
   <footer id="tools">
     <div class="row" id="brushes" role="radiogroup" aria-label="Brush">

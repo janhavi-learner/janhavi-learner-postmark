@@ -6,6 +6,7 @@ import { brushSettings } from './brushes.js';
 import { loadCurrentPalette, saveCurrentPalette } from './palettes.js';
 import { createPaletteSheet } from './palette-sheet.js';
 import { locationPermission, getPosition, describePlace, savePlace } from './place.js';
+import { setupZoom } from './zoom.js';
 
 const STAMP_ASPECT = 4 / 5; // width / height
 
@@ -24,6 +25,8 @@ const redoButton = document.getElementById('redo');
 const clearButton = document.getElementById('clear');
 const clearDialog = document.getElementById('confirm-clear');
 const errorBox = document.getElementById('errors');
+const overview = document.getElementById('overview');
+const detailDot = document.getElementById('detail-dot');
 
 const state = {
   brush: 'medium',
@@ -153,6 +156,16 @@ async function start() {
   const permission = await locationPermission();
   if (permission === 'granted') locate(); // already allowed before: no need to ask again
   else if (permission === 'denied' || !('geolocation' in navigator)) sheet.setLocation({ status: 'denied' });
+
+  const zoom = setupZoom({ engine, canvas, stage, overview });
+
+  // Detail brush: a small dot marks exactly where paint lands, above the finger.
+  engine.onPointer(({ x, y, down }) => {
+    zoom.avoid(x, y);
+    const show = down && state.brush === 'detail';
+    detailDot.hidden = !show;
+    if (show) detailDot.style.transform = `translate(${x}px, ${y}px)`;
+  });
 
   waterSlider.addEventListener('input', () => {
     state.water = Number(waterSlider.value);
