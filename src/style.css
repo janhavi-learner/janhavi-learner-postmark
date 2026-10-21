@@ -23,6 +23,13 @@
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --label-size: 11px;
 
+  /* Palette sheet */
+  --sheet-bg: #faf8f4;
+  --sheet-shadow: 0 -8px 30px rgb(0 0 0 / 0.12);
+  --sheet-max-height: 72dvh;
+  --chip-size: 22px;
+  --chip-size-big: 44px;
+
   /* Motion */
   --collapse-time: 220ms;
 }
@@ -128,9 +135,21 @@ svg .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap:
 #brushes button[aria-checked="true"] { background: var(--selected-bg); color: var(--selected-fg); }
 #brushes button[aria-checked="true"] span { color: inherit; }
 
-/* Colours */
-#swatches { justify-content: center; flex-wrap: wrap; }
+/* Colors: one row that scrolls sideways when a palette has more than fit, plus the palette button. */
+#color-bar { gap: 4px; }
+#swatches {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: var(--gap);
+  padding: 6px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+#swatches::-webkit-scrollbar { display: none; }
 #swatches button {
+  flex: none;
   width: var(--swatch);
   height: var(--swatch);
   border-radius: 50%;
@@ -166,6 +185,159 @@ body.wet-brush #swatches { opacity: 0.35; }
   place-items: center;
   border-radius: 50%;
 }
+
+/* Palette sheet: slides up over the tools; the stamp stays in place behind it. */
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  background: var(--sheet-bg);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--sheet-shadow);
+}
+.sheet[hidden] { display: none; }
+.sheet-scroll {
+  max-height: var(--sheet-max-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  min-height: var(--tap);
+}
+.sheet h2 { font-size: 17px; font-weight: 600; margin: 0; }
+.sheet h3 {
+  font-size: var(--label-size);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 16px 0 4px;
+}
+
+.locate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tools-bg);
+}
+.locate svg { flex: none; color: var(--ink-soft); }
+.locate p { flex: 1; margin: 0; font-size: 14px; line-height: 1.35; }
+.locate p span { color: var(--ink-soft); }
+
+.palette-list { list-style: none; margin: 0; padding: 0; }
+.palette-list li { display: flex; align-items: center; gap: 4px; }
+.palette-row {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  text-align: left;
+}
+.palette-list li.current .palette-row { background: var(--tools-bg); }
+.row-name { font-size: 15px; }
+.row-name em {
+  font-style: normal;
+  font-size: var(--label-size);
+  color: var(--ink-soft);
+  margin-left: 6px;
+}
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip {
+  display: inline-block;
+  width: var(--chip-size);
+  height: var(--chip-size);
+  border-radius: 50%;
+  background: var(--chip);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+}
+
+.pill {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--tools-bg);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.pill.strong { background: var(--selected-bg); color: var(--selected-fg); box-shadow: none; }
+.pill.quiet { background: none; box-shadow: none; color: var(--danger); }
+.pill.wide { width: 100%; min-height: var(--tap); margin-top: 16px; }
+
+/* Palette editor */
+.name-field {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgb(0 0 0 / 0.15);
+  padding: 6px 2px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.name-field:focus, .name-field:focus-visible { outline: none; border-bottom-color: var(--ink); }
+.edit-colors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--chip-size-big), 1fr));
+  gap: 14px 10px;
+  margin-top: 16px;
+  justify-items: center;
+}
+.edit-color { position: relative; }
+.chip.big { width: var(--chip-size-big); height: var(--chip-size-big); position: relative; cursor: pointer; }
+/* The real color input covers the chip, invisible, so tapping the chip opens the phone's picker. */
+.chip.big input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.chip.add {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: var(--ink-soft);
+  background: none;
+  box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.2);
+}
+.remove {
+  position: absolute;
+  top: -8px; right: -8px;
+  width: 24px; height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sheet-bg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+.remove svg { width: 14px; height: 14px; }
+.hint { font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
+.hint.warn { color: var(--danger); }
+.sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 16px; }
+.spacer { flex: 1; }
 
 /* Clear confirmation */
 dialog {

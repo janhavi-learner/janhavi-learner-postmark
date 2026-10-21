@@ -32,13 +32,18 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c4-1 9-6 14-14" class="line"/></svg>
         <span>Detail</span>
       </button>
-      <button type="button" role="radio" data-brush="wet" aria-label="Wet brush: softens without adding colour">
+      <button type="button" role="radio" data-brush="wet" aria-label="Wet brush: softens without adding color">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z" class="line"/></svg>
         <span>Wet</span>
       </button>
     </div>
 
-    <div class="row" id="swatches" role="radiogroup" aria-label="Colour"></div>
+    <div class="row" id="color-bar">
+      <div id="swatches" role="radiogroup" aria-label="Color"></div>
+      <button type="button" id="palette-button" class="icon" aria-label="Change palette">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.5-1-2.6 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z" class="line"/><circle cx="7.5" cy="11" r="1.2" class="fill"/><circle cx="10" cy="7" r="1.2" class="fill"/><circle cx="14.5" cy="7" r="1.2" class="fill"/></svg>
+      </button>
+    </div>
 
     <div class="row" id="actions">
       <label class="water">
@@ -59,6 +64,8 @@
     </div>
   </footer>
 </div>
+
+<section id="palette-sheet" class="sheet" aria-label="Colors" hidden></section>
 
 <dialog id="confirm-clear">
   <form method="dialog">

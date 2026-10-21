@@ -3,11 +3,11 @@ import { createEngine } from '../engine/engine/src/engine.js';
 import { lockPage } from './page-lock.js';
 import { keepScreenAwake } from './wake-lock.js';
 import { brushSettings } from './brushes.js';
+import { loadCurrentPalette, saveCurrentPalette } from './palettes.js';
+import { createPaletteSheet } from './palette-sheet.js';
+import { locationPermission, getPosition, describePlace, savePlace } from './place.js';
 
 const STAMP_ASPECT = 4 / 5; // width / height
-
-// Placeholder colours until palettes arrive in Phase 3.
-const COLORS = ['#3d5a80', '#7fa7c9', '#5b7f4a', '#c9a24a', '#a8553a', '#4a4e5a'];
 
 // The engine's tuning sliders are for development only: add ?tune to the URL to see them.
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -16,6 +16,8 @@ const stage = document.getElementById('stage');
 const canvas = document.getElementById('stamp');
 const brushButtons = [...document.querySelectorAll('#brushes button')];
 const swatchRow = document.getElementById('swatches');
+const paletteButton = document.getElementById('palette-button');
+const sheetRoot = document.getElementById('palette-sheet');
 const waterSlider = document.getElementById('water');
 const undoButton = document.getElementById('undo');
 const redoButton = document.getElementById('redo');
@@ -25,7 +27,9 @@ const errorBox = document.getElementById('errors');
 
 const state = {
   brush: 'medium',
-  color: COLORS[0],
+  palette: loadCurrentPalette(),
+  colorIndex: 0,
+  get color() { return this.palette.colors[this.colorIndex]; },
   water: Number(waterSlider.value),
   stampWidth: 0,
 };
@@ -50,20 +54,20 @@ function fitStamp() {
 }
 
 function buildSwatches() {
-  for (const color of COLORS) {
+  swatchRow.replaceChildren(...state.palette.colors.map((color, i) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.setAttribute('role', 'radio');
-    b.setAttribute('aria-label', `Colour ${color}`);
-    b.dataset.color = color;
+    b.setAttribute('aria-label', `Color ${i + 1}`);
+    b.dataset.index = i;
     b.style.setProperty('--swatch-color', color);
-    swatchRow.append(b);
-  }
+    return b;
+  }));
 }
 
 function showSelection() {
   for (const b of brushButtons) b.setAttribute('aria-checked', String(b.dataset.brush === state.brush));
-  for (const b of swatchRow.children) b.setAttribute('aria-checked', String(b.dataset.color === state.color));
+  for (const b of swatchRow.children) b.setAttribute('aria-checked', String(Number(b.dataset.index) === state.colorIndex));
   document.body.classList.toggle('wet-brush', state.brush === 'wet');
 }
 
@@ -106,12 +110,50 @@ async function start() {
   swatchRow.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    state.color = b.dataset.color;
+    state.colorIndex = Number(b.dataset.index);
     // Picking a colour while on the wet brush means you want to paint: go back to medium.
     if (state.brush === 'wet') state.brush = 'medium';
     showSelection();
     applyBrush();
   });
+  // Palettes can change at any time; the painting is untouched. The same color slot stays
+  // selected when the new palette has it.
+  const sheet = createPaletteSheet(sheetRoot, {
+    getCurrent: () => state.palette,
+    onUse(palette) {
+      state.palette = palette;
+      state.colorIndex = Math.min(state.colorIndex, palette.colors.length - 1);
+      saveCurrentPalette(palette);
+      buildSwatches();
+      showSelection();
+      applyBrush();
+    },
+    onLocate: locate,
+  });
+  paletteButton.addEventListener('click', () => sheet.open());
+
+  // Location: asked once at the start, only to suggest a palette (and later fill the postmark).
+  async function locate() {
+    sheet.setLocation({ status: 'busy' });
+    let position;
+    try {
+      position = await getPosition();
+    } catch (e) {
+      sheet.setLocation({ status: e.denied ? 'denied' : 'unclear' });
+      return;
+    }
+    const place = await describePlace(position);
+    savePlace(position, place);
+    if (place.offline) sheet.setLocation({ status: 'offline' });
+    else sheet.setLocation({ status: place.type ? 'found' : 'unclear', ...place });
+  }
+
+  // The palette sheet opens at the start, over the tools, with the stamp still in view.
+  sheet.open();
+  const permission = await locationPermission();
+  if (permission === 'granted') locate(); // already allowed before: no need to ask again
+  else if (permission === 'denied' || !('geolocation' in navigator)) sheet.setLocation({ status: 'denied' });
+
   waterSlider.addEventListener('input', () => {
     state.water = Number(waterSlider.value);
     applyBrush();
@@ -132,6 +174,7 @@ async function start() {
   // Tools sink out of the way while a stroke is on the paper, and come back after lifting.
   let restoreTimer = 0;
   canvas.addEventListener('pointerdown', () => {
+    sheet.close(); // starting to paint means the current palette is fine
     clearTimeout(restoreTimer);
     document.body.classList.add('painting');
   });
