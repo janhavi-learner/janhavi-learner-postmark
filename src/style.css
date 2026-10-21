@@ -1,0 +1,24 @@
+/* Design tokens: change these to restyle the app. */
+:root {
+  --paper-bg: #ece8e1;
+  --ink: #3a3733;
+  --ink-soft: #7a756d;
+  --accent: #9c4a3a;
+  --toolbar-bg: rgb(255 255 255 / 0.7);
+  --radius: 14px;
+  --tap: 44px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--paper-bg);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+.placeholder {
+  padding: 24px;
+  color: var(--ink-soft);
+}

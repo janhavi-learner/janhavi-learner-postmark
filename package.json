@@ -1,0 +1,18 @@
+{
+  "name": "postmark",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "engine:update": "git subtree pull --prefix engine engine main --squash -m \"Update engine\""
+  },
+  "dependencies": {
+    "tweakpane": "^4.0.5"
+  },
+  "devDependencies": {
+    "vite": "^6.4.5"
+  }
+}
