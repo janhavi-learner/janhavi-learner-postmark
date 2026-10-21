@@ -9,6 +9,9 @@
 </head>
 <body>
 <div id="app">
+  <header id="topbar">
+    <button type="button" id="done" class="pill strong">Done</button>
+  </header>
   <main id="stage">
     <canvas id="stamp" aria-label="Painting"></canvas>
     <p id="engine-message" hidden></p>
@@ -71,6 +74,37 @@
 </div>
 
 <section id="palette-sheet" class="sheet" aria-label="Colors" hidden></section>
+
+<section id="postmark-screen" aria-label="Postmark" hidden>
+  <div class="screen-scroll">
+    <header class="screen-head">
+      <button type="button" id="pm-back" class="pill">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" class="line"/></svg>
+        Keep painting
+      </button>
+    </header>
+    <div class="pm-preview"><canvas id="pm-canvas"></canvas></div>
+    <div class="segmented" role="radiogroup" aria-label="Format">
+      <button type="button" role="radio" data-format="stamp">Stamp</button>
+      <button type="button" role="radio" data-format="sticker">Sticker</button>
+      <button type="button" role="radio" data-format="painting">Painting only</button>
+    </div>
+    <div id="pm-fields">
+      <label class="field"><span>Place</span>
+        <input id="pm-place" maxlength="32" placeholder="Where are you?" autocomplete="off" enterkeyhint="done">
+      </label>
+      <div class="field-row">
+        <label class="field"><span>Date</span>
+          <input id="pm-date" maxlength="11" autocomplete="off" enterkeyhint="done">
+        </label>
+        <label class="field value"><span>Value <em>optional</em></span>
+          <input id="pm-value" maxlength="6" placeholder="₹5" autocomplete="off" enterkeyhint="done">
+        </label>
+      </div>
+    </div>
+    <button type="button" id="pm-save" class="pill strong wide" disabled>Save image</button>
+  </div>
+</section>
 
 <dialog id="confirm-clear">
   <form method="dialog">

@@ -115,11 +115,32 @@ export async function describePlace(position) {
   return place;
 }
 
-// Kept on the device for the postmark (Phase 4).
+// Kept on the device for the postmark.
 export function savePlace(position, place) {
   try {
     localStorage.setItem(PLACE_KEY, JSON.stringify({ lat: position.lat, lon: position.lon, ...place, at: Date.now() }));
   } catch {
     // Not saved; the postmark falls back to an empty field.
   }
+}
+
+// The place taken at the start, or null if location was never given.
+export function loadPlace() {
+  try {
+    return JSON.parse(localStorage.getItem(PLACE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+// "32.24° N, 77.19° E": shown on the postmark when there was no signal to look up a name.
+export const formatCoords = ({ lat, lon }) =>
+  `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
+
+// Town-level name for saved coordinates, once the phone is back online. Saves it too.
+export async function lookupPlaceName(saved) {
+  const town = await nominatim('/reverse', { lat: saved.lat, lon: saved.lon, zoom: 10, addressdetails: 1 });
+  const name = placeName(town);
+  if (name) savePlace(saved, { ...saved, name, offline: false });
+  return name;
 }

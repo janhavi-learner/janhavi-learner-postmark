@@ -36,6 +36,9 @@
   --dot-size: 8px;
   --dot-color: #c0392b;
   --dot-ring: rgb(255 255 255 / 0.9);
+
+  /* Postmark screen */
+  --preview-height: 46dvh;
   --chip-size-big: 44px;
 
   /* Motion */
@@ -66,6 +69,13 @@ body { position: fixed; inset: 0; }
   display: flex;
   flex-direction: column;
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+
+/* Top bar: Done, out of the way of the thumb. */
+#topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
 }
 
 /* The stamp: centred in whatever space the tools leave. */
@@ -384,6 +394,76 @@ body.wet-brush #swatches { opacity: 0.35; }
 .hint.warn { color: var(--danger); }
 .sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 16px; }
 .spacer { flex: 1; }
+
+/* Postmark screen: covers the painting screen; the painting waits underneath. */
+#postmark-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--surround);
+}
+#postmark-screen[hidden] { display: none; }
+.screen-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  max-width: 480px;
+  margin: 0 auto;
+}
+.screen-head { display: flex; min-height: var(--tap); align-items: center; }
+.screen-head .pill { display: inline-flex; align-items: center; gap: 2px; padding-left: 8px; }
+.screen-head svg { width: 20px; height: 20px; }
+.pm-preview {
+  display: grid;
+  place-items: center;
+  height: var(--preview-height);
+  margin: 8px 0 16px;
+}
+/* Shown at screen size; the canvas itself holds the full-resolution export. */
+#pm-canvas {
+  max-width: 100%;
+  max-height: var(--preview-height);
+  filter: drop-shadow(0 4px 14px rgb(0 0 0 / 0.14));
+}
+
+.segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--tools-bg);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+.segmented button {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.segmented button[aria-checked="true"] { background: var(--selected-bg); color: var(--selected-fg); }
+
+#pm-fields[hidden] { display: none; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
+.field span { font-size: var(--label-size); color: var(--ink-soft); letter-spacing: 0.04em; text-transform: uppercase; }
+.field em { font-style: normal; text-transform: none; letter-spacing: 0; }
+/* 16px text: smaller makes iPhone zoom in when a field is tapped. */
+.field input {
+  font: inherit;
+  font-size: 16px;
+  color: inherit;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tools-bg);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  -webkit-user-select: text;
+  user-select: text;
+}
+.field-row { display: flex; gap: var(--gap); }
+.field-row .field { flex: 1; min-width: 0; }
+.field-row .field.value { flex: 0 0 34%; }
 
 /* Clear confirmation */
 dialog {

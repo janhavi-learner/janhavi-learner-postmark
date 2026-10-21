@@ -9,9 +9,9 @@ export function lockPage() {
   }
 
   // Block scrolling and pull-to-refresh by touch, except on sliders (they need to drag)
-  // and the parts that scroll on purpose: the color row, the palette sheet, the error log.
+  // and the parts that scroll on purpose: the color row, the palette sheet, the postmark screen, the error log.
   document.addEventListener('touchmove', (e) => {
-    if (e.target.closest('input[type="range"], #swatches, .sheet-scroll, #errors')) return;
+    if (e.target.closest('input[type="range"], #swatches, .sheet-scroll, .screen-scroll, #errors')) return;
     e.preventDefault();
   }, { passive: false });
 

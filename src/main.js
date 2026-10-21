@@ -7,6 +7,8 @@ import { loadCurrentPalette, saveCurrentPalette } from './palettes.js';
 import { createPaletteSheet } from './palette-sheet.js';
 import { locationPermission, getPosition, describePlace, savePlace } from './place.js';
 import { setupZoom } from './zoom.js';
+import { renderPainting } from './postmark-art.js';
+import { createPostmarkScreen } from './postmark-screen.js';
 
 const STAMP_ASPECT = 4 / 5; // width / height
 
@@ -27,6 +29,7 @@ const clearDialog = document.getElementById('confirm-clear');
 const errorBox = document.getElementById('errors');
 const overview = document.getElementById('overview');
 const detailDot = document.getElementById('detail-dot');
+const doneButton = document.getElementById('done');
 
 const state = {
   brush: 'medium',
@@ -165,6 +168,25 @@ async function start() {
     const show = down && state.brush === 'detail';
     detailDot.hidden = !show;
     if (show) detailDot.style.transform = `translate(${x}px, ${y}px)`;
+  });
+
+  // Done: the painting finishes drying, then the postmark screen opens with it.
+  const postmark = createPostmarkScreen(document.getElementById('postmark-screen'), {
+    onBack: () => engine.setInputEnabled(true),
+  });
+  doneButton.addEventListener('click', async () => {
+    sheet.close();
+    engine.setInputEnabled(false);
+    doneButton.disabled = true;
+    doneButton.textContent = 'Drying…';
+    try {
+      // Waiting on the engine for this (docs/engine-request-phase4-5.md); until then, export as is.
+      if (engine.finishDrying) await engine.finishDrying({ durationMs: 1500 });
+      postmark.open(renderPainting(engine));
+    } finally {
+      doneButton.disabled = false;
+      doneButton.textContent = 'Done';
+    }
   });
 
   waterSlider.addEventListener('input', () => {
