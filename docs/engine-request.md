@@ -13,7 +13,8 @@ const engine = await createEngine(canvas, { tune: false }); // tune: true shows 
 - `engine.setBrush({ color, water, size, wet })`: `size` is the diameter in CSS pixels on screen. `wet: true` is the current water brush. The new values apply from the next stroke.
 - Per-brush `spread` (and ideally `taper`) in `setBrush`, so a "Detail" brush can be thin, use little water and spread less. If spread can only be global, please tell me.
 - `engine.undo()`, `engine.redo()`, `engine.clear()` (Clear is one undo step), and `engine.onHistoryChange(({ canUndo, canRedo }) => …)`. Please keep at least 20 steps.
-- Tweakpane is only created when `tune: true`.
+- Tweakpane is only created when `tune: true`, and it's loaded with a dynamic `import()`. The PRD needs the first load under 1 MB before textures, and Tweakpane shouldn't count toward that.
+- The PRD says the water slider goes "from dry to soaking wet; wetter means more spread and softer edges". Right now `water` controls how dilute the paint is and how long it stays wet. Could it also drive spread and edge softness, or would you rather keep those separate?
 
 ### Needed next (zoom and thin lines), so please plan for these now
 
@@ -25,7 +26,7 @@ const engine = await createEngine(canvas, { tune: false }); // tune: true shows 
 ### Needed later (export and auto-save)
 
 - `await engine.finishDrying()`: fast-forwards until all paint is dry.
-- `engine.render({ width })` returns a canvas or ImageBitmap of the painting on paper, at least 1200×1500 (long side ≥ 1500px).
+- `engine.render({ width })` returns a canvas or ImageBitmap of the painting on paper, at least 1200×1500 (long side ≥ 1500px). The PRD asks for the painting to be stored at 2–3× screen resolution so exports are sharp, and allows the wet simulation to run at a lower resolution than the dry layer. Today the paint is 1.5× and capped at 720px wide.
 - `engine.onStrokeEnd(cb)`, `await engine.save()` returning a Blob or ArrayBuffer of the current painting (dry and wet layers, plus enough for drying to continue), and `await engine.load(data)`. This runs after every stroke, so it needs to be quick on a phone. Undo history doesn't need saving.
 
 Mobile memory is tight: 20 undo steps at a higher paint resolution could get large. Please pick whatever trade-off you think is right and tell me what it is.
