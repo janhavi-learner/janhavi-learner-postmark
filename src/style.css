@@ -6,8 +6,12 @@
   --ink-soft: #68635b;          /* labels, hints (4.5:1 or better on every background here) */
   --tools-bg: rgb(255 255 255 / 0.6);
   --surface: #ffffff;           /* dialogs */
-  --selected-bg: #3a3733;
-  --selected-fg: #f7f4ee;
+  /* Buttons: primary (one main action per screen), secondary, tertiary. Selected brush or format
+     is a separate look, so it never reads as a button to press. */
+  --primary-bg: #3a3733;
+  --primary-fg: #f7f4ee;
+  --selected-bg: var(--surface);
+  --selected-ring: var(--ink);
   --danger: #9c3a2e;
   --on-danger: #ffffff;
   --hairline: rgb(0 0 0 / 0.1);        /* thin outlines on swatches, fields, pills */
@@ -56,7 +60,7 @@
   --sheet-bg: #faf8f4;
   --sheet-shadow: 0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg, cast upward */
   --sheet-max-height: 72dvh;
-  --chip-size: 22px;
+  --chip-size: 14px;          /* colors on a palette card */
 
   /* Zoom preview and Detail dot */
   --overview-width: 72px;
@@ -217,8 +221,13 @@ svg .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap:
   border-radius: var(--radius-sm);
 }
 #brushes span { font-size: var(--text-xs); color: var(--ink-soft); }
-#brushes button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
-#brushes button[aria-pressed="true"] span { color: inherit; }
+#brushes button[aria-pressed="true"],
+.segmented button[aria-pressed="true"] {
+  background: var(--selected-bg);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--selected-ring), var(--shadow-sm);
+}
+#brushes button[aria-pressed="true"] span { color: var(--ink); }
 
 /* Colors: one row that scrolls sideways when a palette has more than fit, plus the palette button. */
 #color-bar { gap: 4px; }
@@ -291,25 +300,17 @@ body.wet-brush #swatches { opacity: 0.35; }
 .sheet-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--gap);
+  gap: 4px;
   min-height: var(--tap);
 }
 .sheet h2 { font-size: var(--text-lg); font-weight: 600; margin: 0; text-wrap: balance; }
-.sheet h3 {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: 16px 0 4px;
-}
 
 .locate {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
-  padding: 10px 12px;
+  margin-top: 4px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
   background: var(--tools-bg);
 }
@@ -317,30 +318,53 @@ body.wet-brush #swatches { opacity: 0.35; }
 .locate p { flex: 1; margin: 0; font-size: var(--text-md); line-height: 1.35; text-wrap: pretty; }
 .locate p span { color: var(--ink-soft); }
 
-.palette-list { list-style: none; margin: 0; padding: 0; }
-.palette-list li { display: flex; align-items: center; gap: 4px; }
-.palette-row {
-  flex: 1;
-  min-width: 0;
-  min-height: 52px;
+/* Every palette in one sideways row of cards; the sheet stays about as low as the toolbar. */
+.palette-strip {
+  list-style: none;
+  display: flex;
+  gap: var(--gap);
+  margin: 4px -16px 0;
+  padding: 10px 16px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px; /* cards snap to the gutter, not the screen edge */
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.palette-strip::-webkit-scrollbar { display: none; }
+.palette-strip li { flex: none; scroll-snap-align: start; }
+.palette-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 6px;
+  padding: 8px 10px 10px;
   border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
   text-align: left;
 }
-.palette-list li.current .palette-row { background: var(--tools-bg); }
-.row-name { font-size: var(--text-base); }
-.row-name em {
-  font-style: normal;
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-  margin-left: 6px;
+.palette-card[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--selected-ring), var(--shadow-sm); }
+.card-name {
+  max-width: 8.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-md);
+  font-weight: 500;
 }
-.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.card-tag {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: var(--text-xs);
+}
+.chips { display: grid; grid-template-columns: repeat(6, var(--chip-size)); gap: 3px; }
 .chip {
   display: inline-block;
   width: var(--chip-size);
@@ -350,19 +374,26 @@ body.wet-brush #swatches { opacity: 0.35; }
   box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
+/* Buttons. Primary: the one main action on a screen. Secondary: supporting actions.
+   Tertiary: low-stakes, text only. Danger: confirms a destructive action. */
 .pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   min-height: 36px;
   padding: 0 14px;
   border-radius: var(--radius-pill);
-  background: var(--tools-bg);
-  box-shadow: inset 0 0 0 1px var(--hairline);
   font-size: var(--text-md);
   white-space: nowrap;
 }
-.pill.strong { background: var(--selected-bg); color: var(--selected-fg); box-shadow: none; }
-.pill.quiet { background: none; box-shadow: none; color: var(--danger); }
+.pill svg { width: 18px; height: 18px; }
+.pill.primary { background: var(--primary-bg); color: var(--primary-fg); font-weight: 500; }
+.pill.secondary { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+.pill.tertiary { background: none; color: var(--ink); padding: 0 10px; }
+.pill.danger { background: var(--danger); color: var(--on-danger); font-weight: 500; }
+.pill.danger-text { color: var(--danger); }
 .pill.wide { width: 100%; min-height: var(--tap); margin-top: 16px; }
-.pill.quiet-ink { background: none; box-shadow: none; color: var(--ink-soft); }
 #pm-new { margin-top: 4px; }
 
 /* Palette editor */
@@ -382,13 +413,17 @@ body.wet-brush #swatches { opacity: 0.35; }
 }
 .name-field:focus, .name-field:focus-visible { outline: none; border-bottom-color: var(--ink); }
 .edit-colors {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--chip-size-big), 1fr));
-  gap: 14px 10px;
-  margin-top: 16px;
-  justify-items: center;
+  display: flex;
+  gap: 12px;
+  margin: 4px -16px 0;
+  padding: 12px 16px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  touch-action: pan-x;
 }
-.edit-color { position: relative; }
+.edit-colors::-webkit-scrollbar { display: none; }
+.edit-color { position: relative; flex: none; }
+.chip.add { flex: none; }
 .chip.big { width: var(--chip-size-big); height: var(--chip-size-big); position: relative; cursor: pointer; }
 /* The real color input covers the chip, invisible, so tapping the chip opens the phone's picker. */
 .chip.big input {
@@ -420,10 +455,10 @@ body.wet-brush #swatches { opacity: 0.35; }
   box-shadow: var(--shadow-sm);
 }
 .remove svg { width: 14px; height: 14px; }
-.hint { font-size: var(--text-sm); color: var(--ink-soft); margin: 14px 0 0; text-wrap: pretty; }
+.hint { font-size: var(--text-sm); color: var(--ink-soft); margin: 10px 0 0; text-wrap: pretty; }
 .status { margin-top: 8px; text-align: center; min-height: 1lh; }
 .hint.warn { color: var(--danger); }
-.sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 16px; }
+.sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 12px; }
 .spacer { flex: 1; }
 
 /* Postmark screen: covers the painting screen; the painting waits underneath. */
@@ -472,7 +507,6 @@ body.wet-brush #swatches { opacity: 0.35; }
   border-radius: var(--radius-pill);
   font-size: var(--text-md);
 }
-.segmented button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
 
 #pm-fields[hidden] { display: none; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
@@ -512,8 +546,7 @@ dialog p { margin: 0 0 4px; font-size: var(--text-lg); }
 .dialog-title { text-wrap: balance; }
 dialog .hint { color: var(--ink-soft); font-size: var(--text-md); margin-bottom: 16px; }
 .dialog-buttons { display: flex; gap: var(--gap); justify-content: flex-end; }
-.dialog-buttons button { min-height: var(--tap); padding: 0 16px; border-radius: var(--radius-pill); }
-.dialog-buttons .danger { background: var(--danger); color: var(--on-danger); }
+.dialog-buttons .pill { min-height: var(--tap); }
 
 /* Engine errors on screen, because phones have no console. */
 #errors {

@@ -16,7 +16,7 @@
 <body>
 <div id="app">
   <header id="topbar">
-    <button type="button" id="done" class="pill strong">Done</button>
+    <button type="button" id="done" class="pill primary">Done</button>
   </header>
   <main id="stage">
     <canvas id="stamp" role="img" aria-label="Your painting"></canvas>
@@ -85,7 +85,7 @@
   <div class="screen-scroll">
     <h2 id="pm-title" class="visually-hidden" tabindex="-1">Postmark</h2>
     <header class="screen-head">
-      <button type="button" id="pm-back" class="pill">
+      <button type="button" id="pm-back" class="pill secondary">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" class="line"/></svg>
         Keep painting
       </button>
@@ -109,9 +109,9 @@
         </label>
       </div>
     </div>
-    <button type="button" id="pm-save" class="pill strong wide" aria-describedby="pm-status" disabled>Save image</button>
+    <button type="button" id="pm-save" class="pill primary wide" aria-describedby="pm-status" disabled>Save image</button>
     <p id="pm-status" class="hint status" role="status"></p>
-    <button type="button" id="pm-new" class="pill quiet-ink wide">New stamp</button>
+    <button type="button" id="pm-new" class="pill tertiary wide">New stamp</button>
   </div>
 </section>
 
@@ -120,8 +120,8 @@
     <p id="clear-title" class="dialog-title">Clear the painting?</p>
     <p id="clear-desc" class="hint">You can undo this.</p>
     <div class="dialog-buttons">
-      <button value="cancel">Keep painting</button>
-      <button value="clear" class="danger">Clear</button>
+      <button value="cancel" class="pill tertiary">Keep painting</button>
+      <button value="clear" class="pill danger">Clear</button>
     </div>
   </form>
 </dialog>
@@ -131,8 +131,8 @@
     <p id="new-title" class="dialog-title">Start a new stamp?</p>
     <p id="new-desc" class="hint">This painting will be cleared. Save it first if you want to keep it.</p>
     <div class="dialog-buttons">
-      <button value="cancel">Go back</button>
-      <button value="new" class="danger">New stamp</button>
+      <button value="cancel" class="pill tertiary">Go back</button>
+      <button value="new" class="pill danger">New stamp</button>
     </div>
   </form>
 </dialog>

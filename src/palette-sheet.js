@@ -1,6 +1,7 @@
-// The palette sheet: slides up over the tools. Two views:
-//   list:   location suggestion, presets, saved palettes, "New palette"
-//   editor: change, remove or add colors (up to 12), name it, save it on the device
+// The palette sheet: slides up over the tools and stays low, so the stamp stays in view. Two views:
+//   list:   location suggestion, then every palette as a card in one sideways row (tap to use);
+//           Edit (the palette in use) and New sit in the header
+//   editor: change, remove or add colors (up to 12) in one sideways row, name it, save it on the device
 import {
   PRESETS, MAX_COLORS, presetForType, isNearWhite,
   loadCustomPalettes, saveCustomPalette, deleteCustomPalette,
@@ -11,6 +12,7 @@ const chips = (colors) => colors.map((c) => `<span class="chip" style="--chip:${
 const ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" class="line"/></svg>';
 const ICON_BACK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" class="line"/></svg>';
 const ICON_CLOSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" class="line"/></svg>';
+const ICON_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" class="line"/></svg>';
 const ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z" class="line"/><circle cx="12" cy="10" r="2.2" class="line"/></svg>';
 
 export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger }) {
@@ -29,44 +31,51 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger 
     switch (location.status) {
       case 'ask':
         return `<div class="locate">${ICON_PIN}<p>Use your location <span>to suggest colors for where you are</span></p>
-          <button type="button" class="pill" data-action="locate">Use location</button></div>`;
+          <button type="button" class="pill secondary" data-action="locate">Use location</button></div>`;
       case 'busy':
         return `<div class="locate">${ICON_PIN}<p>Looking at where you are…</p></div>`;
       case 'found':
         return `<div class="locate">${ICON_PIN}<p>Looks like ${esc(preset.name.toLowerCase())}${where}</p>
-          <button type="button" class="pill" data-action="use" data-id="${preset.id}">Use ${esc(preset.name)}</button></div>`;
+          <button type="button" class="pill secondary" data-action="use" data-id="${preset.id}">Use ${esc(preset.name)}</button></div>`;
       case 'unclear':
-        return `<div class="locate">${ICON_PIN}<p>Couldn’t tell what kind of place this is${where}. <span>Pick a palette below.</span></p></div>`;
+        return `<div class="locate">${ICON_PIN}<p>Couldn’t tell what kind of place this is${where}. <span>Pick a palette.</span></p></div>`;
       case 'offline':
-        return `<div class="locate">${ICON_PIN}<p>No signal. <span>Pick a palette below.</span></p></div>`;
+        return `<div class="locate">${ICON_PIN}<p>No signal. <span>Pick a palette.</span></p></div>`;
       default: // denied or unsupported: no card, just the presets
         return '';
     }
   }
 
-  function row(p, { suggested = false } = {}) {
+  // One palette as a small card: name above its colors. Tapping it uses it.
+  function card(p, { suggested = false } = {}) {
     const current = getCurrent().id === p.id;
-    return `<li class="${current ? 'current' : ''}">
-      <button type="button" class="palette-row" data-action="use" data-id="${p.id}"${current ? ' aria-current="true"' : ''}>
-        <span class="row-name">${esc(p.name)}${suggested ? ' <em>Suggested</em>' : ''}${current ? ' <em>In use</em>' : ''}</span>
+    return `<li>
+      <button type="button" class="palette-card" data-action="use" data-id="${p.id}" aria-pressed="${current}">
+        <span class="card-name">${esc(p.name)}</span>
         <span class="chips">${chips(p.colors)}</span>
+        ${suggested ? '<span class="card-tag">Suggested</span>' : ''}
       </button>
-      <button type="button" class="icon" data-action="edit" data-id="${p.id}" aria-label="Edit ${esc(p.name)}">${ICON_EDIT}</button>
     </li>`;
   }
 
   function listView() {
     const custom = loadCustomPalettes();
     const suggested = location.status === 'found' ? presetForType(location.type)?.id : null;
+    // The suggested preset comes first, so it's in view without swiping.
+    const presets = [...PRESETS].sort((a, b) => (b.id === suggested) - (a.id === suggested));
+    const current = getCurrent();
     return `<header class="sheet-head">
         <h2>Palettes</h2>
+        <span class="spacer"></span>
+        <button type="button" class="pill tertiary" data-action="edit" data-id="${esc(current.id)}" aria-label="Edit ${esc(current.name)}">${ICON_EDIT}Edit</button>
+        <button type="button" class="pill tertiary" data-action="new" aria-label="New palette">${ICON_PLUS}New</button>
         <button type="button" class="icon" data-action="close" aria-label="Close">${ICON_CLOSE}</button>
       </header>
       ${locationCard()}
-      <h3>Presets</h3>
-      <ul class="palette-list">${PRESETS.map((p) => row(p, { suggested: p.id === suggested })).join('')}</ul>
-      ${custom.length ? `<h3>Your palettes</h3><ul class="palette-list">${custom.map((p) => row(p)).join('')}</ul>` : ''}
-      <button type="button" class="pill wide" data-action="new">+ New palette</button>`;
+      <ul class="palette-strip" aria-label="Palettes to choose from">
+        ${presets.map((p) => card(p, { suggested: p.id === suggested })).join('')}
+        ${custom.map((p) => card(p)).join('')}
+      </ul>`;
   }
 
   function editorView() {
@@ -87,10 +96,10 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger 
       </div>
       <p class="hint" data-hint>Tap a color to change it. Up to ${MAX_COLORS} colors. White is the paper.</p>
       <footer class="sheet-foot">
-        ${isCustom ? '<button type="button" class="pill quiet" data-action="delete">Delete</button>' : ''}
+        ${isCustom ? '<button type="button" class="pill tertiary danger-text" data-action="delete">Delete</button>' : ''}
         <span class="spacer"></span>
-        <button type="button" class="pill" data-action="save" ${draft.colors.length ? '' : 'disabled'}>Save</button>
-        <button type="button" class="pill strong" data-action="use-draft" ${draft.colors.length ? '' : 'disabled'}>Use</button>
+        <button type="button" class="pill secondary" data-action="save" ${draft.colors.length ? '' : 'disabled'}>Save</button>
+        <button type="button" class="pill primary" data-action="use-draft" ${draft.colors.length ? '' : 'disabled'}>Use</button>
       </footer>`;
   }
 
@@ -98,7 +107,7 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger 
     scroll.innerHTML = view === 'list' ? listView() : editorView();
   }
 
-  const findPalette = (id) => [...PRESETS, ...loadCustomPalettes()].find((p) => p.id === id);
+  const findPalette = (id) => [...PRESETS, ...loadCustomPalettes(), getCurrent()].find((p) => p.id === id);
 
   function edit(palette) {
     const isCustom = palette.id?.startsWith('custom:');
