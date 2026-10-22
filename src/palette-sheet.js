@@ -13,7 +13,12 @@ const ICON_BACK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7
 const ICON_CLOSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" class="line"/></svg>';
 const ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z" class="line"/><circle cx="12" cy="10" r="2.2" class="line"/></svg>';
 
-export function createPaletteSheet(root, { getCurrent, onUse, onLocate }) {
+export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger }) {
+  // The list or editor is redrawn inside `scroll`; `announcer` stays put so screen readers
+  // hear location updates even though the content around it is replaced.
+  root.innerHTML = '<div class="sheet-scroll"></div><p class="visually-hidden" aria-live="polite"></p>';
+  const scroll = root.firstElementChild;
+  const announcer = root.lastElementChild;
   let view = 'list';
   let draft = null; // palette being edited: { id, name, colors }
   let location = { status: 'ask' }; // ask | busy | found | unclear | offline | denied | unsupported
@@ -42,7 +47,7 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate }) {
   function row(p, { suggested = false } = {}) {
     const current = getCurrent().id === p.id;
     return `<li class="${current ? 'current' : ''}">
-      <button type="button" class="palette-row" data-action="use" data-id="${p.id}">
+      <button type="button" class="palette-row" data-action="use" data-id="${p.id}"${current ? ' aria-current="true"' : ''}>
         <span class="row-name">${esc(p.name)}${suggested ? ' <em>Suggested</em>' : ''}${current ? ' <em>In use</em>' : ''}</span>
         <span class="chips">${chips(p.colors)}</span>
       </button>
@@ -90,7 +95,7 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate }) {
   }
 
   function render() {
-    root.innerHTML = `<div class="sheet-scroll">${view === 'list' ? listView() : editorView()}</div>`;
+    scroll.innerHTML = view === 'list' ? listView() : editorView();
   }
 
   const findPalette = (id) => [...PRESETS, ...loadCustomPalettes()].find((p) => p.id === id);
@@ -163,16 +168,25 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate }) {
     flashHint('White is the paper: leave those parts unpainted instead.');
   });
 
-  function open(startView = 'list') {
+  // `focus`: opened on purpose (not at start-up), so move focus into the sheet.
+  function open(startView = 'list', { focus = false } = {}) {
     if (startView === 'editor') edit(getCurrent());
     else { view = 'list'; render(); }
     root.hidden = false;
     document.body.classList.add('sheet-open');
+    trigger?.setAttribute('aria-expanded', 'true');
+    if (focus) root.querySelector('button')?.focus();
   }
   function close() {
+    const hadFocus = root.contains(document.activeElement);
     root.hidden = true;
     document.body.classList.remove('sheet-open');
+    trigger?.setAttribute('aria-expanded', 'false');
+    if (hadFocus) trigger?.focus();
   }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !root.hidden && !document.querySelector('dialog[open]')) close();
+  });
 
   return {
     open,
@@ -181,6 +195,9 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate }) {
     setLocation(next) {
       location = next;
       if (!root.hidden && view === 'list') render();
+      const card = document.createElement('div');
+      card.innerHTML = locationCard();
+      announcer.textContent = card.querySelector('p')?.textContent || '';
     },
   };
 }

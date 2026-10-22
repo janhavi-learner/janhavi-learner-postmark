@@ -7,7 +7,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const PREVIEW_FPS = 10;
 const AVOID_PX = 56;        // how close a finger may get to the preview before it moves away
-const ZOOM_OUT_MS = 220;
+const ZOOM_OUT_MS = 200;
 
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
@@ -72,6 +72,10 @@ export function setupZoom({ engine, canvas, stage, overview }) {
 
   function zoomOut() {
     const from = engine.getView();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setView({ scale: 1, x: 0.5, y: 0.5 });
+      return;
+    }
     const t0 = performance.now();
     const step = (now) => {
       const t = clamp((now - t0) / ZOOM_OUT_MS, 0, 1);
@@ -110,14 +114,15 @@ export function setupZoom({ engine, canvas, stage, overview }) {
   }
 
   stage.addEventListener('pointerdown', (e) => {
+    if (overview.contains(e.target)) return; // tapping the preview itself: stay put so the tap lands
     avoid(e.clientX, e.clientY);
-    if (e.pointerType !== 'touch' || overview.contains(e.target)) return;
+    if (e.pointerType !== 'touch') return;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (touches.size === 2) startPinch();
   });
 
   window.addEventListener('pointermove', (e) => {
-    if (e.buttons || e.pointerType === 'touch') avoid(e.clientX, e.clientY);
+    if ((e.buttons || e.pointerType === 'touch') && !overview.contains(e.target)) avoid(e.clientX, e.clientY);
     const t = touches.get(e.pointerId);
     if (!t) return;
     t.x = e.clientX;

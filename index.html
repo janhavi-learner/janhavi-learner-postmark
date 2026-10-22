@@ -19,42 +19,42 @@
     <button type="button" id="done" class="pill strong">Done</button>
   </header>
   <main id="stage">
-    <canvas id="stamp" aria-label="Painting"></canvas>
+    <canvas id="stamp" role="img" aria-label="Your painting"></canvas>
     <p id="engine-message" hidden></p>
     <button type="button" id="overview" data-corner="top-left" aria-label="Zoom out to the whole stamp" hidden>
       <canvas></canvas>
       <span class="view-box"></span>
     </button>
   </main>
-  <div id="detail-dot" hidden></div>
+  <div id="detail-dot" aria-hidden="true" hidden></div>
 
   <footer id="tools">
-    <div class="row" id="brushes" role="radiogroup" aria-label="Brush">
-      <button type="button" role="radio" data-brush="small" aria-label="Small brush">
+    <div class="row" id="brushes" role="group" aria-label="Brush">
+      <button type="button" aria-pressed="false" data-brush="small" aria-label="Small brush">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5" class="fill"/></svg>
         <span>Small</span>
       </button>
-      <button type="button" role="radio" data-brush="medium" aria-label="Medium brush">
+      <button type="button" aria-pressed="false" data-brush="medium" aria-label="Medium brush">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" class="fill"/></svg>
         <span>Medium</span>
       </button>
-      <button type="button" role="radio" data-brush="large" aria-label="Large brush">
+      <button type="button" aria-pressed="false" data-brush="large" aria-label="Large brush">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" class="fill"/></svg>
         <span>Large</span>
       </button>
-      <button type="button" role="radio" data-brush="detail" aria-label="Detail brush">
+      <button type="button" aria-pressed="false" data-brush="detail" aria-label="Detail brush">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c4-1 9-6 14-14" class="line"/></svg>
         <span>Detail</span>
       </button>
-      <button type="button" role="radio" data-brush="wet" aria-label="Wet brush: softens without adding color">
+      <button type="button" aria-pressed="false" data-brush="wet" aria-label="Wet brush: softens without adding color">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z" class="line"/></svg>
         <span>Wet</span>
       </button>
     </div>
 
     <div class="row" id="color-bar">
-      <div id="swatches" role="radiogroup" aria-label="Color"></div>
-      <button type="button" id="palette-button" class="icon" aria-label="Change palette">
+      <div id="swatches" role="group" aria-label="Color"></div>
+      <button type="button" id="palette-button" class="icon" aria-label="Change palette" aria-expanded="false" aria-controls="palette-sheet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.5-1-2.6 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z" class="line"/><circle cx="7.5" cy="11" r="1.2" class="fill"/><circle cx="10" cy="7" r="1.2" class="fill"/><circle cx="14.5" cy="7" r="1.2" class="fill"/></svg>
       </button>
     </div>
@@ -81,19 +81,20 @@
 
 <section id="palette-sheet" class="sheet" aria-label="Colors" hidden></section>
 
-<section id="postmark-screen" aria-label="Postmark" hidden>
+<section id="postmark-screen" aria-labelledby="pm-title" hidden>
   <div class="screen-scroll">
+    <h2 id="pm-title" class="visually-hidden" tabindex="-1">Postmark</h2>
     <header class="screen-head">
       <button type="button" id="pm-back" class="pill">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" class="line"/></svg>
         Keep painting
       </button>
     </header>
-    <div class="pm-preview"><canvas id="pm-canvas"></canvas></div>
-    <div class="segmented" role="radiogroup" aria-label="Format">
-      <button type="button" role="radio" data-format="stamp">Stamp</button>
-      <button type="button" role="radio" data-format="sticker">Sticker</button>
-      <button type="button" role="radio" data-format="painting">Painting only</button>
+    <div class="pm-preview"><canvas id="pm-canvas" role="img" aria-label="Preview of the image you will save"></canvas></div>
+    <div class="segmented" role="group" aria-label="Format">
+      <button type="button" aria-pressed="false" data-format="stamp">Stamp</button>
+      <button type="button" aria-pressed="false" data-format="sticker">Sticker</button>
+      <button type="button" aria-pressed="false" data-format="painting">Painting only</button>
     </div>
     <div id="pm-fields">
       <label class="field"><span>Place</span>
@@ -108,15 +109,16 @@
         </label>
       </div>
     </div>
-    <button type="button" id="pm-save" class="pill strong wide" disabled>Save image</button>
+    <button type="button" id="pm-save" class="pill strong wide" aria-describedby="pm-status" disabled>Save image</button>
+    <p id="pm-status" class="hint status" role="status"></p>
     <button type="button" id="pm-new" class="pill quiet-ink wide">New stamp</button>
   </div>
 </section>
 
-<dialog id="confirm-clear">
+<dialog id="confirm-clear" role="alertdialog" aria-labelledby="clear-title" aria-describedby="clear-desc">
   <form method="dialog">
-    <p>Clear the painting?</p>
-    <p class="hint">You can undo this.</p>
+    <p id="clear-title" class="dialog-title">Clear the painting?</p>
+    <p id="clear-desc" class="hint">You can undo this.</p>
     <div class="dialog-buttons">
       <button value="cancel">Keep painting</button>
       <button value="clear" class="danger">Clear</button>
@@ -124,10 +126,10 @@
   </form>
 </dialog>
 
-<dialog id="confirm-new">
+<dialog id="confirm-new" role="alertdialog" aria-labelledby="new-title" aria-describedby="new-desc">
   <form method="dialog">
-    <p>Start a new stamp?</p>
-    <p class="hint">This painting will be cleared. Save it first if you want to keep it.</p>
+    <p id="new-title" class="dialog-title">Start a new stamp?</p>
+    <p id="new-desc" class="hint">This painting will be cleared. Save it first if you want to keep it.</p>
     <div class="dialog-buttons">
       <button value="cancel">Go back</button>
       <button value="new" class="danger">New stamp</button>
@@ -135,7 +137,7 @@
   </form>
 </dialog>
 
-<pre id="errors" hidden></pre>
+<pre id="errors" role="log" hidden></pre>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

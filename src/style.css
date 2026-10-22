@@ -3,14 +3,32 @@
   /* Colours */
   --surround: #ece8e1;          /* the table the stamp sits on */
   --ink: #3a3733;               /* icons and text */
-  --ink-soft: #8a857c;          /* labels, hints */
+  --ink-soft: #68635b;          /* labels, hints (4.5:1 or better on every background here) */
   --tools-bg: rgb(255 255 255 / 0.6);
+  --surface: #ffffff;           /* dialogs */
   --selected-bg: #3a3733;
   --selected-fg: #f7f4ee;
   --danger: #9c3a2e;
-  --stamp-shadow: 0 1px 2px rgb(0 0 0 / 0.14), 0 8px 24px rgb(0 0 0 / 0.12);
+  --on-danger: #ffffff;
+  --hairline: rgb(0 0 0 / 0.1);        /* thin outlines on swatches, fields, pills */
+  --hairline-strong: rgb(0 0 0 / 0.2);
+  --backdrop: rgb(0 0 0 / 0.25);       /* behind dialogs */
   --error-bg: #3b0d0d;
   --error-fg: #ffd9d9;
+
+  /* Shadows: Tailwind's default scale */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --stamp-shadow: var(--shadow-lg);
+
+  /* Layers, lowest to highest */
+  --z-overview: 1;
+  --z-dot: 2;
+  --z-sheet: 3;
+  --z-screen: 4;
+  --z-errors: 5;
 
   /* Sizes */
   --stamp-margin: 20px;         /* space around the stamp */
@@ -25,7 +43,7 @@
 
   /* Palette sheet */
   --sheet-bg: #faf8f4;
-  --sheet-shadow: 0 -8px 30px rgb(0 0 0 / 0.12);
+  --sheet-shadow: 0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg, cast upward */
   --sheet-max-height: 72dvh;
   --chip-size: 22px;
 
@@ -42,7 +60,7 @@
   --chip-size-big: 44px;
 
   /* Motion */
-  --collapse-time: 220ms;
+  --collapse-time: 200ms;
 }
 
 * { box-sizing: border-box; }
@@ -94,13 +112,12 @@ body { position: fixed; inset: 0; }
 /* Live preview of the whole stamp while zoomed in. Sits in a corner of the stage; tap to zoom out. */
 #overview {
   position: absolute;
-  z-index: 2;
+  z-index: var(--z-overview);
   width: var(--overview-width);
   padding: 0;
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.25), 0 0 0 2px #fff;
-  transition: top 180ms ease, left 180ms ease;
+  box-shadow: var(--shadow-md), 0 0 0 2px var(--surface);
 }
 #overview[hidden] { display: none; }
 #overview canvas { display: block; width: 100%; height: auto; }
@@ -118,7 +135,7 @@ body { position: fixed; inset: 0; }
 #detail-dot {
   position: fixed;
   left: 0; top: 0;
-  z-index: 5;
+  z-index: var(--z-dot);
   width: var(--dot-size);
   height: var(--dot-size);
   margin: calc(var(--dot-size) / -2) 0 0 calc(var(--dot-size) / -2);
@@ -130,6 +147,7 @@ body { position: fixed; inset: 0; }
 #detail-dot[hidden] { display: none; }
 
 #engine-message {
+  text-wrap: pretty;
   max-width: 28ch;
   text-align: center;
   color: var(--ink-soft);
@@ -188,8 +206,8 @@ svg .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap:
   border-radius: 12px;
 }
 #brushes span { font-size: var(--label-size); color: var(--ink-soft); }
-#brushes button[aria-checked="true"] { background: var(--selected-bg); color: var(--selected-fg); }
-#brushes button[aria-checked="true"] span { color: inherit; }
+#brushes button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
+#brushes button[aria-pressed="true"] span { color: inherit; }
 
 /* Colors: one row that scrolls sideways when a palette has more than fit, plus the palette button. */
 #color-bar { gap: 4px; }
@@ -210,10 +228,10 @@ svg .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap:
   height: var(--swatch);
   border-radius: 50%;
   background: var(--swatch-color);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
-#swatches button[aria-checked="true"] {
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1), 0 0 0 2px var(--surround), 0 0 0 4px var(--ink);
+#swatches button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 0 0 2px var(--surround), 0 0 0 4px var(--ink);
 }
 /* The wet brush adds no colour, so the colours step back while it is chosen. */
 body.wet-brush #swatches { opacity: 0.35; }
@@ -246,7 +264,7 @@ body.wet-brush #swatches { opacity: 0.35; }
 .sheet {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  z-index: 10;
+  z-index: var(--z-sheet);
   background: var(--sheet-bg);
   border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: var(--sheet-shadow);
@@ -266,11 +284,10 @@ body.wet-brush #swatches { opacity: 0.35; }
   gap: var(--gap);
   min-height: var(--tap);
 }
-.sheet h2 { font-size: 17px; font-weight: 600; margin: 0; }
+.sheet h2 { font-size: 17px; font-weight: 600; margin: 0; text-wrap: balance; }
 .sheet h3 {
   font-size: var(--label-size);
   font-weight: 600;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-soft);
   margin: 16px 0 4px;
@@ -286,7 +303,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   background: var(--tools-bg);
 }
 .locate svg { flex: none; color: var(--ink-soft); }
-.locate p { flex: 1; margin: 0; font-size: 14px; line-height: 1.35; }
+.locate p { flex: 1; margin: 0; font-size: 14px; line-height: 1.35; text-wrap: pretty; }
 .locate p span { color: var(--ink-soft); }
 
 .palette-list { list-style: none; margin: 0; padding: 0; }
@@ -319,7 +336,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   height: var(--chip-size);
   border-radius: 50%;
   background: var(--chip);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
 .pill {
@@ -327,7 +344,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   padding: 0 14px;
   border-radius: 999px;
   background: var(--tools-bg);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+  box-shadow: inset 0 0 0 1px var(--hairline);
   font-size: 14px;
   white-space: nowrap;
 }
@@ -347,7 +364,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   color: inherit;
   background: none;
   border: 0;
-  border-bottom: 1px solid rgb(0 0 0 / 0.15);
+  border-bottom: 1px solid var(--hairline-strong);
   padding: 6px 2px;
   -webkit-user-select: text;
   user-select: text;
@@ -379,7 +396,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   font-size: 22px;
   color: var(--ink-soft);
   background: none;
-  box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.2);
+  box-shadow: inset 0 0 0 1.5px var(--hairline-strong);
 }
 .remove {
   position: absolute;
@@ -389,10 +406,11 @@ body.wet-brush #swatches { opacity: 0.35; }
   place-items: center;
   border-radius: 50%;
   background: var(--sheet-bg);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  box-shadow: var(--shadow-sm);
 }
 .remove svg { width: 14px; height: 14px; }
-.hint { font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
+.hint { font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; text-wrap: pretty; }
+.status { margin-top: 8px; text-align: center; min-height: 1lh; }
 .hint.warn { color: var(--danger); }
 .sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 16px; }
 .spacer { flex: 1; }
@@ -401,7 +419,7 @@ body.wet-brush #swatches { opacity: 0.35; }
 #postmark-screen {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: var(--z-screen);
   background: var(--surround);
 }
 #postmark-screen[hidden] { display: none; }
@@ -427,7 +445,7 @@ body.wet-brush #swatches { opacity: 0.35; }
 #pm-canvas {
   max-width: 100%;
   max-height: var(--preview-height);
-  filter: drop-shadow(0 4px 14px rgb(0 0 0 / 0.14));
+  filter: drop-shadow(0 10px 15px rgb(0 0 0 / 0.1)); /* shadow-lg, following the perforated outline */
 }
 
 .segmented {
@@ -435,7 +453,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   padding: 3px;
   border-radius: 999px;
   background: var(--tools-bg);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 .segmented button {
   flex: 1;
@@ -443,12 +461,12 @@ body.wet-brush #swatches { opacity: 0.35; }
   border-radius: 999px;
   font-size: 14px;
 }
-.segmented button[aria-checked="true"] { background: var(--selected-bg); color: var(--selected-fg); }
+.segmented button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
 
 #pm-fields[hidden] { display: none; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
-.field span { font-size: var(--label-size); color: var(--ink-soft); letter-spacing: 0.04em; text-transform: uppercase; }
-.field em { font-style: normal; text-transform: none; letter-spacing: 0; }
+.field span { font-size: var(--label-size); color: var(--ink-soft); text-transform: uppercase; }
+.field em { font-style: normal; text-transform: none; }
 /* 16px text: smaller makes iPhone zoom in when a field is tapped. */
 .field input {
   font: inherit;
@@ -459,30 +477,32 @@ body.wet-brush #swatches { opacity: 0.35; }
   border: 0;
   border-radius: 12px;
   background: var(--tools-bg);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1);
+  box-shadow: inset 0 0 0 1px var(--hairline);
   -webkit-user-select: text;
   user-select: text;
 }
 .field-row { display: flex; gap: var(--gap); }
 .field-row .field { flex: 1; min-width: 0; }
 .field-row .field.value { flex: 0 0 34%; }
+#pm-date, #pm-value { font-variant-numeric: tabular-nums; }
 
-/* Clear confirmation */
+/* Confirmations (Clear, New stamp) */
 dialog {
   border: 0;
   border-radius: var(--radius);
   padding: 20px;
   max-width: min(320px, calc(100vw - 32px));
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 12px 40px rgb(0 0 0 / 0.2);
+  box-shadow: var(--shadow-xl);
 }
-dialog::backdrop { background: rgb(0 0 0 / 0.25); }
+dialog::backdrop { background: var(--backdrop); }
 dialog p { margin: 0 0 4px; font-size: 17px; }
+.dialog-title { text-wrap: balance; }
 dialog .hint { color: var(--ink-soft); font-size: 14px; margin-bottom: 16px; }
 .dialog-buttons { display: flex; gap: var(--gap); justify-content: flex-end; }
 .dialog-buttons button { min-height: var(--tap); padding: 0 16px; border-radius: 999px; }
-.dialog-buttons .danger { background: var(--danger); color: #fff; }
+.dialog-buttons .danger { background: var(--danger); color: var(--on-danger); }
 
 /* Engine errors on screen, because phones have no console. */
 #errors {
@@ -496,7 +516,7 @@ dialog .hint { color: var(--ink-soft); font-size: 14px; margin-bottom: 16px; }
   color: var(--error-fg);
   font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
   white-space: pre-wrap;
-  z-index: 100;
+  z-index: var(--z-errors);
   touch-action: pan-y;
 }
 
@@ -506,4 +526,9 @@ dialog .hint { color: var(--ink-soft); font-size: 14px; margin-bottom: 16px; }
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* Less motion for people who ask their phone for it. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; }
 }

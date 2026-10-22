@@ -84,7 +84,6 @@ function buildSwatches() {
   swatchRow.replaceChildren(...state.palette.colors.map((color, i) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.setAttribute('role', 'radio');
     b.setAttribute('aria-label', `Color ${i + 1}`);
     b.dataset.index = i;
     b.style.setProperty('--swatch-color', color);
@@ -93,8 +92,8 @@ function buildSwatches() {
 }
 
 function showSelection() {
-  for (const b of brushButtons) b.setAttribute('aria-checked', String(b.dataset.brush === state.brush));
-  for (const b of swatchRow.children) b.setAttribute('aria-checked', String(Number(b.dataset.index) === state.colorIndex));
+  for (const b of brushButtons) b.setAttribute('aria-pressed', String(b.dataset.brush === state.brush));
+  for (const b of swatchRow.children) b.setAttribute('aria-pressed', String(Number(b.dataset.index) === state.colorIndex));
   document.body.classList.toggle('wet-brush', state.brush === 'wet');
 }
 
@@ -159,8 +158,9 @@ async function start() {
       applyBrush();
     },
     onLocate: locate,
+    trigger: paletteButton,
   });
-  paletteButton.addEventListener('click', () => sheet.open());
+  paletteButton.addEventListener('click', () => sheet.open('list', { focus: true }));
 
   // Location: asked once at the start, only to suggest a palette (and later fill the postmark).
   async function locate() {

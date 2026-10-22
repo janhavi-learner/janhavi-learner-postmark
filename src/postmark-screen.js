@@ -45,6 +45,9 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
   const dateInput = root.querySelector('#pm-date');
   const valueInput = root.querySelector('#pm-value');
   const saveButton = root.querySelector('#pm-save');
+  const status = root.querySelector('#pm-status');
+  const title = root.querySelector('#pm-title');
+  const doneButton = document.getElementById('done');
   const newDialog = document.getElementById('confirm-new');
 
   let painting = null;
@@ -62,6 +65,7 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
     const id = ++renderId;
     file = null;
     saveButton.disabled = true;
+    status.textContent = 'Preparing image…';
     const out = FORMATS[format](painting, { place: placeInput.value.trim(), date: dateInput.value.trim(), value: valueInput.value.trim() });
     preview.width = out.width;
     preview.height = out.height;
@@ -70,6 +74,7 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
       if (id !== renderId || !blob) return; // a newer render took over
       file = new File([blob], fileName(placeInput.value.trim()), { type: 'image/png' });
       saveButton.disabled = false;
+      status.textContent = '';
     }, 'image/png');
   }
   const renderSoon = () => {
@@ -78,7 +83,7 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
   };
 
   function showFormat() {
-    for (const b of formatButtons) b.setAttribute('aria-checked', String(b.dataset.format === format));
+    for (const b of formatButtons) b.setAttribute('aria-pressed', String(b.dataset.format === format));
     fields.hidden = format !== 'stamp'; // only the stamp carries a postmark
   }
 
@@ -129,11 +134,13 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
       if (await saveFile(file)) saved = true;
     } catch (e) {
       console.error(e);
+      status.textContent = 'Couldn’t save the image. Try again.';
     }
   });
   root.querySelector('#pm-back').addEventListener('click', () => {
     root.hidden = true;
     onBack();
+    doneButton.focus();
   });
 
   // New stamp: asks first only if this one hasn't been saved yet.
@@ -164,6 +171,7 @@ export function createPostmarkScreen(root, { onBack, onNewStamp }) {
       fillPlace();
       showFormat();
       root.hidden = false;
+      title.focus(); // screen readers start at the top of the new screen
       render();
     },
   };
