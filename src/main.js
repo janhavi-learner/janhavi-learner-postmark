@@ -9,6 +9,7 @@ import { locationPermission, getPosition, describePlace, savePlace } from './pla
 import { setupZoom } from './zoom.js';
 import { renderPainting } from './postmark-art.js';
 import { createPostmarkScreen } from './postmark-screen.js';
+import { loadSaved, forgetSaved, startAutosave } from './autosave.js';
 
 const STAMP_ASPECT = 4 / 5; // width / height
 
@@ -31,14 +32,34 @@ const overview = document.getElementById('overview');
 const detailDot = document.getElementById('detail-dot');
 const doneButton = document.getElementById('done');
 
+// Last brush, water and color, so coming back feels like you never left.
+const PREFS_KEY = 'postmark.prefs';
+function loadPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ brush: state.brush, water: state.water, colorIndex: state.colorIndex }));
+  } catch {
+    // Not saved; defaults next time.
+  }
+}
+
+const prefs = loadPrefs();
 const state = {
-  brush: 'medium',
+  brush: prefs.brush || 'medium',
   palette: loadCurrentPalette(),
   colorIndex: 0,
   get color() { return this.palette.colors[this.colorIndex]; },
-  water: Number(waterSlider.value),
+  water: prefs.water ?? Number(waterSlider.value),
   stampWidth: 0,
 };
+state.colorIndex = Math.min(prefs.colorIndex || 0, state.palette.colors.length - 1);
+waterSlider.value = state.water;
 
 function showError(message) {
   console.error(message);
@@ -96,7 +117,10 @@ async function start() {
     return;
   }
 
-  const applyBrush = () => engine.setBrush(brushSettings(state.brush, state));
+  const applyBrush = () => {
+    engine.setBrush(brushSettings(state.brush, state));
+    savePrefs();
+  };
   applyBrush();
 
   // The stamp keeps its 4:5 shape when the screen changes size (rotation, browser bars).
@@ -155,10 +179,34 @@ async function start() {
   }
 
   // The palette sheet opens at the start, over the tools, with the stamp still in view.
-  sheet.open();
-  const permission = await locationPermission();
-  if (permission === 'granted') locate(); // already allowed before: no need to ask again
-  else if (permission === 'denied' || !('geolocation' in navigator)) sheet.setLocation({ status: 'denied' });
+  // A painting in progress from last time comes back as it was, wet paint still drying.
+  let blank = true;     // nothing painted since the start or the last Clear
+  let clearing = false; // the next change is a Clear
+  const saved = await loadSaved();
+  if (saved?.painting) {
+    try {
+      await engine.load(saved.painting);
+      blank = saved.blank;
+    } catch (e) {
+      // From an older engine format or damaged: start a fresh stamp instead.
+      console.warn('Saved painting not restored:', e.message);
+      forgetSaved();
+    }
+  }
+  engine.onChange(() => {
+    blank = clearing;
+    clearing = false;
+  });
+  startAutosave(engine, { isBlank: () => blank, onError: showError });
+
+  // A new stamp starts with the palette sheet (and the location question). Coming back to a
+  // painting skips it: the palette and place from its start are kept.
+  if (blank) {
+    sheet.open();
+    const permission = await locationPermission();
+    if (permission === 'granted') locate(); // already allowed before: no need to ask again
+    else if (permission === 'denied' || !('geolocation' in navigator)) sheet.setLocation({ status: 'denied' });
+  }
 
   const zoom = setupZoom({ engine, canvas, stage, overview });
 
@@ -180,8 +228,7 @@ async function start() {
     doneButton.disabled = true;
     doneButton.textContent = 'Drying…';
     try {
-      // Waiting on the engine for this (docs/engine-request-phase4-5.md); until then, export as is.
-      if (engine.finishDrying) await engine.finishDrying({ durationMs: 1500 });
+      await engine.finishDrying({ durationMs: 1500 });
       postmark.open(renderPainting(engine));
     } finally {
       doneButton.disabled = false;
@@ -203,7 +250,9 @@ async function start() {
 
   clearButton.addEventListener('click', () => clearDialog.showModal());
   clearDialog.addEventListener('close', () => {
-    if (clearDialog.returnValue === 'clear') engine.clear();
+    if (clearDialog.returnValue !== 'clear') return;
+    clearing = true;
+    engine.clear();
   });
 
   // Tools sink out of the way while a stroke is on the paper, and come back after lifting.
@@ -219,6 +268,12 @@ async function start() {
   };
   window.addEventListener('pointerup', lift);
   window.addEventListener('pointercancel', lift);
+}
+
+// Offline support, in the built site only. Browsers refuse it on a self-signed certificate
+// (the Wi-Fi dev server), so offline is tested on the real HTTPS site.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('Offline support unavailable:', e.message));
 }
 
 start();
