@@ -59,7 +59,7 @@ export function createPaletteSheet(root, { getCurrent, onUse, onLocate, trigger 
     const custom = loadCustomPalettes();
     const suggested = location.status === 'found' ? presetForType(location.type)?.id : null;
     return `<header class="sheet-head">
-        <h2>Colors</h2>
+        <h2>Palettes</h2>
         <button type="button" class="icon" data-action="close" aria-label="Close">${ICON_CLOSE}</button>
       </header>
       ${locationCard()}

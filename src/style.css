@@ -39,7 +39,18 @@
 
   /* Type */
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --label-size: 11px;
+  --text-xs: 11px;     /* small labels */
+  --text-sm: 13px;     /* hints */
+  --text-md: 14px;     /* buttons, notes */
+  --text-base: 15px;   /* list items */
+  --text-input: 16px;  /* text fields: smaller makes iPhone zoom in on tap */
+  --text-lg: 17px;     /* titles */
+  --text-xl: 22px;     /* the + on "add a color" */
+
+  /* Corner rounding */
+  --radius-xs: 4px;    /* zoom preview */
+  --radius-sm: 12px;   /* brush buttons, cards, fields */
+  --radius-pill: 999px;
 
   /* Palette sheet */
   --sheet-bg: #faf8f4;
@@ -115,7 +126,7 @@ body { position: fixed; inset: 0; }
   z-index: var(--z-overview);
   width: var(--overview-width);
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
   box-shadow: var(--shadow-md), 0 0 0 2px var(--surface);
 }
@@ -203,9 +214,9 @@ svg .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap:
   align-items: center;
   gap: 2px;
   padding: 4px 0;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
-#brushes span { font-size: var(--label-size); color: var(--ink-soft); }
+#brushes span { font-size: var(--text-xs); color: var(--ink-soft); }
 #brushes button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
 #brushes button[aria-pressed="true"] span { color: inherit; }
 
@@ -284,9 +295,9 @@ body.wet-brush #swatches { opacity: 0.35; }
   gap: var(--gap);
   min-height: var(--tap);
 }
-.sheet h2 { font-size: 17px; font-weight: 600; margin: 0; text-wrap: balance; }
+.sheet h2 { font-size: var(--text-lg); font-weight: 600; margin: 0; text-wrap: balance; }
 .sheet h3 {
-  font-size: var(--label-size);
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -299,11 +310,11 @@ body.wet-brush #swatches { opacity: 0.35; }
   gap: 10px;
   margin-top: 8px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--tools-bg);
 }
 .locate svg { flex: none; color: var(--ink-soft); }
-.locate p { flex: 1; margin: 0; font-size: 14px; line-height: 1.35; text-wrap: pretty; }
+.locate p { flex: 1; margin: 0; font-size: var(--text-md); line-height: 1.35; text-wrap: pretty; }
 .locate p span { color: var(--ink-soft); }
 
 .palette-list { list-style: none; margin: 0; padding: 0; }
@@ -318,14 +329,14 @@ body.wet-brush #swatches { opacity: 0.35; }
   justify-content: center;
   gap: 4px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   text-align: left;
 }
 .palette-list li.current .palette-row { background: var(--tools-bg); }
-.row-name { font-size: 15px; }
+.row-name { font-size: var(--text-base); }
 .row-name em {
   font-style: normal;
-  font-size: var(--label-size);
+  font-size: var(--text-xs);
   color: var(--ink-soft);
   margin-left: 6px;
 }
@@ -342,10 +353,10 @@ body.wet-brush #swatches { opacity: 0.35; }
 .pill {
   min-height: 36px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--tools-bg);
   box-shadow: inset 0 0 0 1px var(--hairline);
-  font-size: 14px;
+  font-size: var(--text-md);
   white-space: nowrap;
 }
 .pill.strong { background: var(--selected-bg); color: var(--selected-fg); box-shadow: none; }
@@ -359,7 +370,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   flex: 1;
   min-width: 0;
   font: inherit;
-  font-size: 17px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: inherit;
   background: none;
@@ -393,7 +404,7 @@ body.wet-brush #swatches { opacity: 0.35; }
 .chip.add {
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: var(--text-xl);
   color: var(--ink-soft);
   background: none;
   box-shadow: inset 0 0 0 1.5px var(--hairline-strong);
@@ -409,7 +420,7 @@ body.wet-brush #swatches { opacity: 0.35; }
   box-shadow: var(--shadow-sm);
 }
 .remove svg { width: 14px; height: 14px; }
-.hint { font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; text-wrap: pretty; }
+.hint { font-size: var(--text-sm); color: var(--ink-soft); margin: 14px 0 0; text-wrap: pretty; }
 .status { margin-top: 8px; text-align: center; min-height: 1lh; }
 .hint.warn { color: var(--danger); }
 .sheet-foot { display: flex; align-items: center; gap: var(--gap); margin-top: 16px; }
@@ -451,31 +462,31 @@ body.wet-brush #swatches { opacity: 0.35; }
 .segmented {
   display: flex;
   padding: 3px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--tools-bg);
   box-shadow: inset 0 0 0 1px var(--hairline);
 }
 .segmented button {
   flex: 1;
   min-height: 38px;
-  border-radius: 999px;
-  font-size: 14px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-md);
 }
 .segmented button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-fg); }
 
 #pm-fields[hidden] { display: none; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
-.field span { font-size: var(--label-size); color: var(--ink-soft); text-transform: uppercase; }
+.field span { font-size: var(--text-xs); color: var(--ink-soft); text-transform: uppercase; }
 .field em { font-style: normal; text-transform: none; }
 /* 16px text: smaller makes iPhone zoom in when a field is tapped. */
 .field input {
   font: inherit;
-  font-size: 16px;
+  font-size: var(--text-input);
   color: inherit;
   min-height: var(--tap);
   padding: 0 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--tools-bg);
   box-shadow: inset 0 0 0 1px var(--hairline);
   -webkit-user-select: text;
@@ -497,11 +508,11 @@ dialog {
   box-shadow: var(--shadow-xl);
 }
 dialog::backdrop { background: var(--backdrop); }
-dialog p { margin: 0 0 4px; font-size: 17px; }
+dialog p { margin: 0 0 4px; font-size: var(--text-lg); }
 .dialog-title { text-wrap: balance; }
-dialog .hint { color: var(--ink-soft); font-size: 14px; margin-bottom: 16px; }
+dialog .hint { color: var(--ink-soft); font-size: var(--text-md); margin-bottom: 16px; }
 .dialog-buttons { display: flex; gap: var(--gap); justify-content: flex-end; }
-.dialog-buttons button { min-height: var(--tap); padding: 0 16px; border-radius: 999px; }
+.dialog-buttons button { min-height: var(--tap); padding: 0 16px; border-radius: var(--radius-pill); }
 .dialog-buttons .danger { background: var(--danger); color: var(--on-danger); }
 
 /* Engine errors on screen, because phones have no console. */
