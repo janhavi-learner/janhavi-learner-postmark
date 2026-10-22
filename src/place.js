@@ -124,6 +124,15 @@ export function savePlace(position, place) {
   }
 }
 
+// A new stamp asks for its own location.
+export function forgetPlace() {
+  try {
+    localStorage.removeItem(PLACE_KEY);
+  } catch {
+    // Nothing saved to forget.
+  }
+}
+
 // The place taken at the start, or null if location was never given.
 export function loadPlace() {
   try {

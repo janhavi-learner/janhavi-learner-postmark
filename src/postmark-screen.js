@@ -15,15 +15,17 @@ function fileName(place, day = new Date()) {
 }
 
 // Phones get the share sheet ("Save Image", WhatsApp); computers get a normal download.
+// Returns false if the user closed the share sheet without saving or sharing.
 async function saveFile(file) {
   const phone = matchMedia('(pointer: coarse)').matches;
   if (phone && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file] });
+      return true;
     } catch (e) {
-      if (e.name !== 'AbortError') throw e; // closing the share sheet is fine
+      if (e.name === 'AbortError') return false; // closing the share sheet is fine
+      throw e;
     }
-    return;
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(file);
@@ -32,9 +34,10 @@ async function saveFile(file) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  return true;
 }
 
-export function createPostmarkScreen(root, { onBack }) {
+export function createPostmarkScreen(root, { onBack, onNewStamp }) {
   const preview = root.querySelector('#pm-canvas');
   const formatButtons = [...root.querySelectorAll('[data-format]')];
   const fields = root.querySelector('#pm-fields');
@@ -42,6 +45,7 @@ export function createPostmarkScreen(root, { onBack }) {
   const dateInput = root.querySelector('#pm-date');
   const valueInput = root.querySelector('#pm-value');
   const saveButton = root.querySelector('#pm-save');
+  const newDialog = document.getElementById('confirm-new');
 
   let painting = null;
   let format = 'stamp';
@@ -50,6 +54,7 @@ export function createPostmarkScreen(root, { onBack }) {
   let renderTimer = 0;
   let placeEdited = false;  // once the user types a place, never replace it
   let waitingForName = null; // saved coordinates still waiting for a place name
+  let saved = false;         // this stamp was saved or shared at least once
 
   dateInput.value = postmarkDate();
 
@@ -118,15 +123,44 @@ export function createPostmarkScreen(root, { onBack }) {
   placeInput.addEventListener('input', () => { placeEdited = true; renderSoon(); });
   dateInput.addEventListener('input', renderSoon);
   valueInput.addEventListener('input', renderSoon);
-  saveButton.addEventListener('click', () => file && saveFile(file).catch((e) => console.error(e)));
+  saveButton.addEventListener('click', async () => {
+    if (!file) return;
+    try {
+      if (await saveFile(file)) saved = true;
+    } catch (e) {
+      console.error(e);
+    }
+  });
   root.querySelector('#pm-back').addEventListener('click', () => {
     root.hidden = true;
     onBack();
   });
 
+  // New stamp: asks first only if this one hasn't been saved yet.
+  function startNew() {
+    root.hidden = true;
+    // Everything about the last stamp's postmark goes; the next one gets its own place and date.
+    placeInput.value = '';
+    valueInput.value = '';
+    dateInput.value = postmarkDate();
+    placeEdited = false;
+    placeFilled = false;
+    waitingForName = null;
+    format = 'stamp';
+    onNewStamp();
+  }
+  root.querySelector('#pm-new').addEventListener('click', () => {
+    if (saved) startNew();
+    else newDialog.showModal();
+  });
+  newDialog.addEventListener('close', () => {
+    if (newDialog.returnValue === 'new') startNew();
+  });
+
   return {
     open(paintingCanvas) {
       painting = paintingCanvas;
+      saved = false; // the painting may have changed since the last save
       fillPlace();
       showFormat();
       root.hidden = false;

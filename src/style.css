@@ -334,6 +334,8 @@ body.wet-brush #swatches { opacity: 0.35; }
 .pill.strong { background: var(--selected-bg); color: var(--selected-fg); box-shadow: none; }
 .pill.quiet { background: none; box-shadow: none; color: var(--danger); }
 .pill.wide { width: 100%; min-height: var(--tap); margin-top: 16px; }
+.pill.quiet-ink { background: none; box-shadow: none; color: var(--ink-soft); }
+#pm-new { margin-top: 4px; }
 
 /* Palette editor */
 .name-field {

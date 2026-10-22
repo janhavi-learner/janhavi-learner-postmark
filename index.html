@@ -109,6 +109,7 @@
       </div>
     </div>
     <button type="button" id="pm-save" class="pill strong wide" disabled>Save image</button>
+    <button type="button" id="pm-new" class="pill quiet-ink wide">New stamp</button>
   </div>
 </section>
 
@@ -119,6 +120,17 @@
     <div class="dialog-buttons">
       <button value="cancel">Keep painting</button>
       <button value="clear" class="danger">Clear</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirm-new">
+  <form method="dialog">
+    <p>Start a new stamp?</p>
+    <p class="hint">This painting will be cleared. Save it first if you want to keep it.</p>
+    <div class="dialog-buttons">
+      <button value="cancel">Go back</button>
+      <button value="new" class="danger">New stamp</button>
     </div>
   </form>
 </dialog>

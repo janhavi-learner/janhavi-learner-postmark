@@ -5,7 +5,7 @@ import { keepScreenAwake } from './wake-lock.js';
 import { brushSettings } from './brushes.js';
 import { loadCurrentPalette, saveCurrentPalette } from './palettes.js';
 import { createPaletteSheet } from './palette-sheet.js';
-import { locationPermission, getPosition, describePlace, savePlace } from './place.js';
+import { locationPermission, getPosition, describePlace, savePlace, forgetPlace } from './place.js';
 import { setupZoom } from './zoom.js';
 import { renderPainting } from './postmark-art.js';
 import { createPostmarkScreen } from './postmark-screen.js';
@@ -201,12 +201,14 @@ async function start() {
 
   // A new stamp starts with the palette sheet (and the location question). Coming back to a
   // painting skips it: the palette and place from its start are kept.
-  if (blank) {
+  async function beginStamp() {
+    sheet.setLocation({ status: 'ask' });
     sheet.open();
     const permission = await locationPermission();
     if (permission === 'granted') locate(); // already allowed before: no need to ask again
     else if (permission === 'denied' || !('geolocation' in navigator)) sheet.setLocation({ status: 'denied' });
   }
+  if (blank) beginStamp();
 
   const zoom = setupZoom({ engine, canvas, stage, overview });
 
@@ -221,6 +223,15 @@ async function start() {
   // Done: the painting finishes drying, then the postmark screen opens with it.
   const postmark = createPostmarkScreen(document.getElementById('postmark-screen'), {
     onBack: () => engine.setInputEnabled(true),
+    // A fresh stamp for the next place: blank paper, zoomed out, new palette and location.
+    onNewStamp() {
+      forgetPlace();
+      clearing = true;
+      engine.clear();
+      zoom.zoomOut();
+      engine.setInputEnabled(true);
+      beginStamp();
+    },
   });
   doneButton.addEventListener('click', async () => {
     sheet.close();
